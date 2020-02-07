@@ -18,7 +18,7 @@ def calculate(green_mask, blue_mask): # print to console how many green/blue pix
     blue_count = cv2.countNonZero(blue_mask)
     green_percentage = round((green_count/green_mask.size) * 100, 2)
     blue_percentage = round((blue_count/blue_mask.size) * 100, 2)
-    print(f"Greens: {green_percentage}% Blues: {green_percentage}%")
+    print(f"Greens: {green_percentage}% Blues: {blue_percentage}%")
 
 
 
@@ -62,7 +62,7 @@ def video():
 
 
 
-        #try and catch to handle different OS. They require different number of parameters
+        #try and catch to handle different OS. They require different number of parameters or else it'll crash
         try:
             #contours to create rectangles around the colors
             (contours_green,_) = cv2.findContours(green_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
