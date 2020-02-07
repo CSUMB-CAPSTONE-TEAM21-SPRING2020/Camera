@@ -59,9 +59,20 @@ def video():
         blue_mask = cv2.inRange(hsv2, low_blue, high_blue)
         blue = cv2.bitwise_and(frame2, frame2, mask=blue_mask)
 
-        #contours to create rectangles around the colors
-        (contours_green,_) = cv2.findContours(green_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-        (contours_blue,_) = cv2.findContours(blue_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+
+
+        #try and catch to handle different OS. They require different number of parameters
+        try:
+            #contours to create rectangles around the colors
+            (contours_green,_) = cv2.findContours(green_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+            (contours_blue,_) = cv2.findContours(blue_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        except:
+            (_,contours_green,_) = cv2.findContours(green_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+            (_,contours_blue,_) = cv2.findContours(blue_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+
+
+
 
         #draw rectangles around where green is spotted
         for contour in contours_green:
