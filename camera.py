@@ -5,11 +5,12 @@ import time
 
 
 cap = cv2.VideoCapture(0) # video camera
-lower_green = np.array([40, 40, 40])
-upper_green = np.array([80, 255, 255])
 
-low_blue = np.array([94, 80, 2])
-high_blue = np.array([126, 255, 255])
+lower_green = np.array([40, 40, 40])
+upper_green = np.array([80, 255, 200])
+
+low_blue = np.array([94, 30, 2])
+high_blue = np.array([150, 255, 200])
 
 
 
@@ -42,7 +43,7 @@ def screenshot(): # use this if need to store the images, one original, one with
 
 def video():
     t1 = time.time() #small delay before first finding blue and green
-    period1 = 5 # do function1() every _ second
+    period1 = 5 # do calculate every _ second
     sleep_seconds = 0.01
 
     while True:
@@ -60,8 +61,6 @@ def video():
         blue = cv2.bitwise_and(frame2, frame2, mask=blue_mask)
 
 
-
-
         #try and catch to handle different OS. They require different number of parameters or else it'll crash
         try:
             #contours to create rectangles around the colors
@@ -70,8 +69,6 @@ def video():
         except:
             (_,contours_green,_) = cv2.findContours(green_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
             (_,contours_blue,_) = cv2.findContours(blue_mask, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-
-
 
 
         #draw rectangles around where green is spotted
@@ -121,6 +118,50 @@ def video():
         time.sleep( sleep_seconds )
 
 
+
+
+
+
+    # Find OpenCV version
+        (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
+        
+       # With webcam get(CV_CAP_PROP_FPS) does not work.
+       # Let's see for ourselves.
+        
+        if int(major_ver)  < 3 :
+            fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
+            print("Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps))
+        else :
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            print("Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps))
+
+
+        # Number of frames to capture
+        num_frames = 120;
+
+
+        print("Capturing {0} frames".format(num_frames))
+
+        # Start time
+        start = time.time()
+
+        # Grab a few frames
+        for i in xrange(0, num_frames) :
+            ret, frame = video.read()
+
+
+        # End time
+        end = time.time()
+
+        # Time elapsed
+        seconds = end - start
+        print("Time taken : {0} seconds".format(seconds))
+
+        # Calculate frames per second
+        fps  = num_frames / seconds;
+        print("Estimated frames per second : {0}".format(fps))
+    
+    
 
 video() #initiate video when program starts
     
