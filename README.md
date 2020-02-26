@@ -2,12 +2,15 @@
 
 Setting up the RaspberryPi
 
-Installing Raspbian Operating System
--Download the OS Image
-    -https://www.raspberrypi.org/downloads/raspbian/
--Download the Image burner
-    - https://www.balena.io/etcher/
-- Unzip the image file and burn to SD card using Balena Etcher
+Format under construction
+
+1. Installing Raspbian Operating System
+    - Download the OS Image
+       - https://www.raspberrypi.org/downloads/raspbian/
+    - Download the Image burner
+       - https://www.balena.io/etcher/
+    - Unzip the image file and burn to SD card using Balena Etcher
+  
 
 
 RaspberryPi Configurations
