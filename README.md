@@ -10,7 +10,7 @@ Setting up the RaspberryPi
     - Unzip the image file and burn to SD card using Balena Etcher
   
 2. RaspberryPi Configurations
-    - Initial setup will require a mouse & keyboard
+    - Initial setup will require a mouse, keyboard, monitor, and internet connection
     - Finish setup wizard including updates
     - Start Menu -> Preferences -> RaspberryPi Configuration -> Interfaces
         - Enable Camera 
@@ -42,6 +42,7 @@ Setting up the RaspberryPi
         - sudo apt-get install libqtgui4 libqtwebkit4 libqt4-test python3-pyqt5
         - sudo apt-get install python3-dev
         - pip install opencv-contrib-python==4.1.0.25
+        - pip install PyQt5
 
 
 
