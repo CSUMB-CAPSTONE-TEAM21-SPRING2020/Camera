@@ -20,6 +20,10 @@ import numpy as np
 import threading
 from threading import Timer
 import pathlib
+import firebase_admin
+from firebase_admin import credentials, firestore
+import datetime
+
 
 
 class MainWindow(QWidget):
@@ -28,16 +32,25 @@ class MainWindow(QWidget):
         # call QWidget constructor
         super().__init__()
         
+        #Machine's id
+        self.machine_id = 'UnnamedMachine'
+
+
+        #Firebase
+        self.cred = credentials.Certificate('./key.json')
+        self.default_app = firebase_admin.initialize_app(self.cred)
+        self.db = firestore.client()
+              
+        
         #total measurements made before sending data
         self.current_averages_list = []
-        
         self.text_messages_list = []
         
         # color values
-        self.lower_green = np.array([40, 40, 40])
-        self.upper_green = np.array([80, 255, 200])
-        self.lower_blue = np.array([94, 30, 2])
-        self.upper_blue = np.array([150, 255, 200])
+        self.lower_green = np.array([18, 34, 35])
+        self.upper_green = np.array([23, 255, 105])
+        self.lower_blue = np.array([94, 30, 0])
+        self.upper_blue = np.array([169, 255, 200])
                 
         #get screen resolution for scaling
         self.windowObject = QtWidgets.QDesktopWidget().screenGeometry(-1)
@@ -50,6 +63,8 @@ class MainWindow(QWidget):
         self.blue_videos_grid = QVBoxLayout()
         self.sliders_grid = QGridLayout()
         self.buttons_grid = QGridLayout()
+        self.name_grid = QGridLayout()
+
         self.main_grid = QVBoxLayout()
         
         
@@ -69,12 +84,15 @@ class MainWindow(QWidget):
         self.exit_button.clicked.connect(self.controlTimer)
         self.buttons_grid.addWidget(self.exit_button,0,3)
         
-        self.exit_button = QPushButton('Exit')
-
+        #Print window
         self.text_panel = QPlainTextEdit(self)
         self.text_panel.setReadOnly(True)
         
-        
+        #Machine name textbox
+        self.textbox_machine_name = QLineEdit(self)
+        self.textbox_machine_name.setAlignment(QtCore.Qt.AlignCenter)
+        self.textbox_machine_name.setText(self.machine_id)
+
         
         
         self.lower_green_label = QLabel("Lower Green Values ")
@@ -262,8 +280,12 @@ class MainWindow(QWidget):
         self.videos_grid.addWidget(self.text_panel)
         self.videos_grid.addLayout(self.blue_videos_grid)
 
+        #Add textbox to name layout
+        self.name_grid.addWidget(self.textbox_machine_name)
+
         #main grid adding subgrids
         self.main_grid.addLayout(self.buttons_grid)
+        self.main_grid.addLayout(self.name_grid)
         self.main_grid.addLayout(self.sliders_grid)
         self.main_grid.addLayout(self.videos_grid)
         self.setLayout(self.main_grid)
@@ -277,7 +299,7 @@ class MainWindow(QWidget):
         # set timer timeout callback function
         self.timer.timeout.connect(self.viewCam)
         
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(0) # make sure to change this when using webcam
 
 
         # read image in BGR format
@@ -373,9 +395,25 @@ class MainWindow(QWidget):
                 tempSumBlue = tempSumBlue + self.current_averages_list[x][1]
                 tempTotalGreenAverages = tempSumGreen/len(self.current_averages_list)
                 tempTotalBlueAverages = tempSumBlue/len(self.current_averages_list)
+                
+            #Timestamp
+            ts = time.time();
+            timeData = datetime.datetime.fromtimestamp(ts).strftime('%H:%M:%S')
+            
+            #data to send to firestor db
+            data = {
+                u'ripe': tempTotalBlueAverages,
+                u'unripe': tempTotalGreenAverages,
+                u'timestamp': timeData,
+                    }
+            
+            #Send data to firestore
+            #self.doc_ref = self.db.collection(u'berries').document(self.machine_id).set(data)
+            self.doc_ref = self.db.collection(u'berries').document(self.textbox_machine_name.text().lower().strip()).collection(u'data').add(data)
+
             mainWindow.update_messages(f"Average Greens: {tempTotalGreenAverages}% Average Blues: {tempTotalBlueAverages}% \n")
             mainWindow.update_messages(f"Data sent to Server \n")
-
+            
             self.current_averages_list.clear()
             
 
@@ -417,14 +455,14 @@ class MainWindow(QWidget):
         #draw rectangles around where green is spotted
         for contour in contours_green:
             area = cv2.contourArea(contour)
-            if(area > 500):
+            if(area > 10):
                 x,y,w,h = cv2.boundingRect(contour)
                 self.frame1 = cv2.rectangle(self.frame1, (x,y),(x+w,y+h),(0,255,0),10)
                 
         #draw rectangles around where blue is spotted
         for contour in contours_blue:
             area = cv2.contourArea(contour)
-            if(area > 500):
+            if(area > 10):
                 x,y,w,h = cv2.boundingRect(contour)
                 self.frame2 = cv2.rectangle(self.frame2, (x,y),(x+w,y+h),(0,0,255),10)
                 
@@ -511,6 +549,7 @@ class MainWindow(QWidget):
         file.write(f'{self.upper_blue[0]}\n')
         file.write(f'{self.upper_blue[1]}\n')
         file.write(f'{self.upper_blue[2]}\n')
+        file.write(f'{str(self.textbox_machine_name.text())}\n')
         file.close()
         self.hide()
         self.show()
@@ -534,6 +573,8 @@ class MainWindow(QWidget):
         self.file.write(f'{self.upper_blue[0]}\n')
         self.file.write(f'{self.upper_blue[1]}\n')
         self.file.write(f'{self.upper_blue[2]}\n')
+        self.file.write(f'{self.machine_id}\n')
+
         self.file.close()
         self.hide()
         self.show()
@@ -556,7 +597,8 @@ class MainWindow(QWidget):
         self.upper_blue[0] = int(lines[9])
         self.upper_blue[1] = int(lines[10])
         self.upper_blue[2] = int(lines[11])
-        
+        self.machine_id = str(lines[12])
+
         self.slider1.setValue(self.lower_green[0])
         self.slider2.setValue(self.lower_green[1])
         self.slider3.setValue(self.lower_green[2])
@@ -569,6 +611,7 @@ class MainWindow(QWidget):
         self.slider10.setValue(self.upper_blue[0])
         self.slider11.setValue(self.upper_blue[1])
         self.slider12.setValue(self.upper_blue[2])
+        self.textbox_machine_name.setText(str(self.machine_id))
         self.hide()
         self.show()
         
@@ -590,7 +633,9 @@ class MainWindow(QWidget):
         self.upper_blue[0] = int(lines[9])
         self.upper_blue[1] = int(lines[10])
         self.upper_blue[2] = int(lines[11])
-        
+        self.machine_id = str(lines[12])
+
+
         self.slider1.setValue(self.lower_green[0])
         self.slider2.setValue(self.lower_green[1])
         self.slider3.setValue(self.lower_green[2])
@@ -603,6 +648,7 @@ class MainWindow(QWidget):
         self.slider10.setValue(self.upper_blue[0])
         self.slider11.setValue(self.upper_blue[1])
         self.slider12.setValue(self.upper_blue[2])
+        self.textbox_machine_name.setText(str(self.machine_id))
         self.hide()
         self.show()
             

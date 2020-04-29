@@ -43,6 +43,7 @@ Setting up the RaspberryPi
         - sudo apt-get install python3-dev
         - pip install opencv-contrib-python==4.1.0.25
         - pip install PyQt5
+        - pip install pathlib
 
 
 
