@@ -1,4 +1,3 @@
-import sys
 
 # import some PyQt5 modules
 from PyQt5.QtWidgets import QApplication
@@ -12,17 +11,23 @@ from PyQt5.QtWidgets import (QWidget, QLabel, QLineEdit, QTextEdit, QGridLayout,
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
+
+#Date and time modules
 import time
+import datetime
 import math
-import cv2
-#from ui_main_window import *
-import numpy as np
 import threading
 from threading import Timer
+
+#Data handling & system modules
+import cv2
+import numpy as np
 import pathlib
+import sys
+
+#Firebase modules
 import firebase_admin
 from firebase_admin import credentials, firestore
-import datetime
 
 
 
@@ -299,7 +304,7 @@ class MainWindow(QWidget):
         # set timer timeout callback function
         self.timer.timeout.connect(self.viewCam)
         
-        self.cap = cv2.VideoCapture(0) # make sure to change this when using webcam
+        self.cap = cv2.VideoCapture(0) # make sure to change this when using external webcam
 
 
         # read image in BGR format
@@ -407,9 +412,14 @@ class MainWindow(QWidget):
                 u'timestamp': timeData,
                     }
             
+            field_data = {
+                u'name': self.textbox_machine_name.text().lower().strip(),
+                    }
+
             #Send data to firestore
-            #self.doc_ref = self.db.collection(u'berries').document(self.machine_id).set(data)
             self.doc_ref = self.db.collection(u'berries').document(self.textbox_machine_name.text().lower().strip()).collection(u'data').add(data)
+            #Need to add a field to document as well, firestore does not like empty documents
+            self.doc_ref = self.db.collection(u'berries').document(self.textbox_machine_name.text().lower().strip()).set(field_data)
 
             mainWindow.update_messages(f"Average Greens: {tempTotalGreenAverages}% Average Blues: {tempTotalBlueAverages}% \n")
             mainWindow.update_messages(f"Data sent to Server \n")
@@ -655,19 +665,15 @@ class MainWindow(QWidget):
                 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-
-    
         
     # create and show mainWindow
     mainWindow = MainWindow()
     mainWindow.show()
     
-
     #Handle restoring user settings
     settings_file = pathlib.Path("settings.txt")
     settings_default_file = pathlib.Path("settingsdefault.txt")
     mainWindow.save_settings_default()
-        
         
     try:
         mainWindow.restore_settings()
@@ -676,8 +682,6 @@ if __name__ == '__main__':
         mainWindow.update_messages("No Color Settings Found. Generating From Default Profile. \n")
         mainWindow.save_settings()
 
-        
-        
     mainWindow.controlTimer()
     mainWindow.check_exit_status()
     mainWindow.capture_data_timer()
